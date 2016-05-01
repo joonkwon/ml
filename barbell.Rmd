@@ -1,0 +1,74 @@
+---
+title: "Barbell Lift"
+author: "Joohyun Kwon"
+date: "April 26, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data.train = read.csv("pml-training.csv")
+data.val = read.csv("pml-testing.csv")
+```
+
+Find zero Variance Column and remove that colums from data
+
+```{r}
+library(caret)
+library(randomForest)
+zeroVarCols = nearZeroVar(data.train)
+data.sub = data.train[,-zeroVarCols]
+```
+
+We find NA columns and remove them. Also we remove the first 6 columns that shows timestamps, subject id, windows number. 
+
+```{r}
+naCols = colSums(is.na(data.sub)) > 10000
+data = data.sub[,!naCols]
+data = data[,7:59]
+features = names(data)[-53]
+data.val = data.val[,features]
+```
+
+```{r}
+idxTrain = createDataPartition(data$classe, p = 0.75, list=FALSE)
+training = data[idxTrain,]
+testing = data[-idxTrain,]
+```
+
+```{r}
+fit.rf = train(classe ~ ., data=training, method="rf",
+               trControl=trainControl(method="cv",number=5), prox=TRUE,allowParallel=TRUE)
+predict.rf = predict(fit.rf, testing)
+confusionMatrix(predict.rf, testing$classe)
+```
+
+```{r}
+fit.knn = train(classe ~ ., data=training, method="knn", preProcess = c("center","scale"),
+               trControl=trainControl(method="cv",number=5))
+
+predict.knn = predict(fit.knn, testing)
+confusionMatrix(predict.knn, testing$classe)
+```
+
+```{r}
+#library(kernlab)
+#ctrl <- trainControl(method="repeatedcv",   # 10fold cross validation
+#                     repeats=5,		    # do 5 repititions of cv
+#                     classProbs=TRUE)
+ 
+ 
+#Train and Tune the SVM
+#fit.svm <- train(classe ~ ., data=training,
+#                  method = "svmRadial",   # Radial kernel
+#                  tuneLength = 9,					# 9 values of the cost function
+#                  preProc = c("center","scale"),  # Center and scale data
+#                  metric="ROC",
+#                  trControl=ctrl)
+
+#predict.svm <- predict(fit.svm, testing)
+#confusionMatrix(predict.svm, testing$classe)
+```
