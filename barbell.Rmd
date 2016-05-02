@@ -9,6 +9,19 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#Synopsis
+
+Popularity of devices such as Jawbone Up, Nike FuelBand, and Fitbit makes the collection of personal activity data much easier than before. With these data many alaylisis have been carried out to identity what kind of and how much of activities people do in a certian period. However, not much analysis have been done on the quality of an activity. 
+In our analysis, we try to classify a performance of Unilateral Dumbbell Biceps Curl to five different classes (class A to E). This is an attemp to quantity the quality of the excercise.
+
+Given dataset are devided to traing and testing set. We train our algorithm with the training data. We used two algorithms and the result from both will be applied to the testing set for comparison. The algorithm with higher accuracy will be used to make the prediction. 
+
+#Background
+
+The dataset used here comes from Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. [Qualitative Activity Recognition of Weight Lifting Exercises](http://groupware.les.inf.puc-rio.br/work.jsf?p1=11201). Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
 ```{r}
 data.train = read.csv("pml-training.csv")
 data.val = read.csv("pml-testing.csv")
@@ -39,14 +52,14 @@ training = data[idxTrain,]
 testing = data[-idxTrain,]
 ```
 
-```{r}
+```{r cache=TRUE}
 fit.rf = train(classe ~ ., data=training, method="rf",
                trControl=trainControl(method="cv",number=5), prox=TRUE,allowParallel=TRUE)
 predict.rf = predict(fit.rf, testing)
 confusionMatrix(predict.rf, testing$classe)
 ```
 
-```{r}
+```{r cache=TRUE}
 fit.knn = train(classe ~ ., data=training, method="knn", preProcess = c("center","scale"),
                trControl=trainControl(method="cv",number=5))
 
