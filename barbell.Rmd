@@ -1,5 +1,5 @@
 ---
-title: "Barbell Lift"
+title: "Unilateral Dumbbell Biceps Curl Classification"
 author: "Joohyun Kwon"
 date: "April 26, 2016"
 output: html_document
@@ -20,16 +20,22 @@ Given dataset are devided to traing and testing set. We train our algorithm with
 
 The dataset used here comes from Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. [Qualitative Activity Recognition of Weight Lifting Exercises](http://groupware.les.inf.puc-rio.br/work.jsf?p1=11201). Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
 
-Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+Six young healthy participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+#Data Cleanup
+Load the data.
 
 ```{r}
 data.train = read.csv("pml-training.csv")
 data.val = read.csv("pml-testing.csv")
 ```
 
+data.train will be used for training and validation. data.val will be used for final submission. data.val doesn't have final classe labels.
+
+
 Find zero Variance Column and remove that colums from data
 
-```{r}
+```{r message=FALSE}
 library(caret)
 library(randomForest)
 zeroVarCols = nearZeroVar(data.train)
@@ -46,11 +52,17 @@ features = names(data)[-53]
 data.val = data.val[,features]
 ```
 
+#Split Data to Training and Testing
+
 ```{r}
 idxTrain = createDataPartition(data$classe, p = 0.75, list=FALSE)
 training = data[idxTrain,]
 testing = data[-idxTrain,]
 ```
+
+#Classification with Random Forest
+
+First, we fit a model using Random Forest algorithm.
 
 ```{r cache=TRUE}
 fit.rf = train(classe ~ ., data=training, method="rf",
@@ -58,6 +70,12 @@ fit.rf = train(classe ~ ., data=training, method="rf",
 predict.rf = predict(fit.rf, testing)
 confusionMatrix(predict.rf, testing$classe)
 ```
+
+The classification using Random Forest algorithm shows over 99% accuracy.
+
+#Classification with KNN
+
+Next, we build a model using K-Nearest Neighbors. 
 
 ```{r cache=TRUE}
 fit.knn = train(classe ~ ., data=training, method="knn", preProcess = c("center","scale"),
@@ -67,21 +85,13 @@ predict.knn = predict(fit.knn, testing)
 confusionMatrix(predict.knn, testing$classe)
 ```
 
-```{r}
-#library(kernlab)
-#ctrl <- trainControl(method="repeatedcv",   # 10fold cross validation
-#                     repeats=5,		    # do 5 repititions of cv
-#                     classProbs=TRUE)
- 
- 
-#Train and Tune the SVM
-#fit.svm <- train(classe ~ ., data=training,
-#                  method = "svmRadial",   # Radial kernel
-#                  tuneLength = 9,					# 9 values of the cost function
-#                  preProc = c("center","scale"),  # Center and scale data
-#                  metric="ROC",
-#                  trControl=ctrl)
+The accuracy of KNN algorithm is about 97%.
 
-#predict.svm <- predict(fit.svm, testing)
-#confusionMatrix(predict.svm, testing$classe)
+
+So, we decided to use the model with Random Forest for the prediction
+
+#Prediction
+
+```{r}
+predict(fit.rf, data.val)
 ```
